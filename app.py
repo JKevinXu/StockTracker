@@ -37,128 +37,208 @@ def get_ip_address():
 hostname = socket.gethostname()
 ip_address = get_ip_address()
 
-# App Layout
-app.layout = dbc.Container([
-    dbc.Row([
-        dbc.Col([
-            html.H1(f"{config.STOCK_NAME} RSU Tracker", className="text-center my-4"),
-            html.Hr(),
-        ], width=12)
-    ]),
-    
-    # Stock Price Information Section
-    dbc.Row([
-        dbc.Col([
-            html.H4("Current Stock Information"),
-            dbc.Card([
-                dbc.CardBody([
-                    dbc.Row([
-                        dbc.Col([
-                            html.H2(id="current-price"),
-                            html.P("Current Price ($)", className="text-muted"),
-                        ], width=4),
-                        dbc.Col([
-                            html.H2(id="price-change"),
-                            html.P("Change Today", className="text-muted"),
-                        ], width=4),
-                        dbc.Col([
-                            html.H2(id="total-value"),
-                            html.P("Total RSU Value ($)", className="text-muted"),
-                        ], width=4),
-                    ]),
-                ])
-            ], className="mb-4"),
-            
-            # Alerts Section
-            html.Div(id="alerts-section", className="mt-3"),
-            
-            # Price Chart
-            dbc.Card([
-                dbc.CardHeader("Stock Price History"),
-                dbc.CardBody([
-                    dcc.Graph(id="price-chart"),
-                    dbc.Row([
-                        dbc.Col([
-                            dbc.Label("Time Period"),
-                            dcc.Dropdown(
-                                id="time-period",
-                                options=[
-                                    {"label": "1 Month", "value": "1mo"},
-                                    {"label": "3 Months", "value": "3mo"},
-                                    {"label": "6 Months", "value": "6mo"},
-                                    {"label": "1 Year", "value": "1y"},
-                                    {"label": "2 Years", "value": "2y"},
-                                    {"label": "5 Years", "value": "5y"},
-                                    {"label": "Max", "value": "max"},
-                                ],
-                                value="1y",
-                                className="mb-3",
-                            )
-                        ], width=6),
-                    ]),
-                ]),
-            ], className="mb-4"),
-        ], width=12, lg=6),
-        
-        # RSU Information Section
-        dbc.Col([
-            html.H4("RSU Information"),
-            dbc.Card([
-                dbc.CardHeader("Vesting Schedule"),
-                dbc.CardBody([
-                    dcc.Graph(id="vesting-chart"),
-                ]),
-            ], className="mb-4"),
-            
-            dbc.Card([
-                dbc.CardHeader("Selling Strategy"),
-                dbc.CardBody([
-                    dbc.Row([
-                        dbc.Col([
-                            dbc.Label("Strategy"),
-                            dcc.Dropdown(
-                                id="selling-strategy",
-                                options=[
-                                    {"label": desc, "value": key} 
-                                    for key, desc in config.SELLING_STRATEGIES.items()
-                                ],
-                                value=config.DEFAULT_STRATEGY,
-                                className="mb-3",
-                            ),
-                        ], width=12),
-                    ]),
-                    dcc.Graph(id="selling-chart"),
-                ]),
-            ]),
-        ], width=12, lg=6),
-    ]),
-    
-    # Data Tables Section
-    dbc.Row([
-        dbc.Col([
-            html.H4("Selling Plan Details"),
-            dash_table.DataTable(
-                id="selling-table",
-                style_table={"overflowX": "auto"},
-                style_cell={
-                    "textAlign": "left",
-                    "padding": "10px",
-                    "minWidth": "80px",
-                },
-                style_header={
-                    "backgroundColor": "rgb(230, 230, 230)",
-                    "fontWeight": "bold",
-                },
-                style_data_conditional=[
-                    {
-                        "if": {"row_index": "odd"},
-                        "backgroundColor": "rgb(248, 248, 248)",
-                    }
-                ],
-                page_size=10,
+# Layout components
+navbar = dbc.Navbar(
+    dbc.Container(
+        [
+            html.A(
+                dbc.Row(
+                    [
+                        dbc.Col(html.Img(src="https://d1.awsstatic.com/logos/aws-logo-lockups/powerredby/PB_AWS_logo_RGB_stacked_REV_SQ.91cd4af40773cbfbd15577a3c2b8a346fe3e8fa2.png", height="30px")),
+                        dbc.Col(dbc.NavbarBrand(f"{config.STOCK_NAME} RSU Tracker", className="ms-2")),
+                    ],
+                    align="center",
+                ),
+                href="/",
+                style={"textDecoration": "none"},
             ),
-        ], width=12),
-    ], className="mt-4"),
+            dbc.Row(
+                [
+                    dbc.Col(
+                        [
+                            html.Div(id="network-info", className="text-light", style={"fontSize": "0.8rem"}),
+                            dbc.Button(
+                                "Network Access", id="modal-button", size="sm", color="light", className="ml-2"
+                            ),
+                        ]
+                    )
+                ]
+            )
+        ],
+    ),
+    color="dark",
+    dark=True,
+)
+
+network_modal = dbc.Modal(
+    [
+        dbc.ModalHeader("Network Access Information"),
+        dbc.ModalBody([
+            html.P("Access this dashboard from any device on your network using:"),
+            html.Ul([
+                html.Li([html.Strong("URL: "), html.A(f"http://{ip_address}:{config.DEFAULT_PORT}", 
+                                                     href=f"http://{ip_address}:{config.DEFAULT_PORT}", 
+                                                     target="_blank")]),
+                html.Li([html.Strong("Hostname: "), f"{hostname}:{config.DEFAULT_PORT}"]),
+            ]),
+            html.P("Note: Devices must be on the same network to access this URL.")
+        ]),
+        dbc.ModalFooter(
+            dbc.Button("Close", id="close-modal", className="ml-auto")
+        ),
+    ],
+    id="network-modal",
+    size="lg",
+)
+
+# App Layout
+app.layout = html.Div([
+    navbar,
+    network_modal,
+    dbc.Container([
+        html.Div(id="data-loading-status", className="alert alert-info mt-3", 
+                 children="Loading stock data... Please wait.", style={"display": "block"}),
+        html.Div(id="data-error-message", className="alert alert-danger mt-3", 
+                 children="Failed to load stock data. Check your internet connection.", style={"display": "none"}),
+        
+        dbc.Row([
+            dbc.Col([
+                dbc.Card([
+                    dbc.CardHeader("Amazon Stock Overview"),
+                    dbc.CardBody([
+                        dbc.Row([
+                            dbc.Col([
+                                html.H3(id="current-price", children="--"),
+                                html.P("Current Price (USD)"),
+                            ], width=4),
+                            dbc.Col([
+                                html.H3(id="price-change", children="--"),
+                                html.P("Today's Change"),
+                            ], width=4),
+                            dbc.Col([
+                                html.H3(id="total-rsu-value", children="--"),
+                                html.P("RSU Value (USD)"),
+                            ], width=4),
+                        ]),
+                    ]),
+                ], className="mt-3"),
+            ], width=12),
+        ]),
+        
+        # Stock Price Information Section
+        dbc.Row([
+            dbc.Col([
+                html.H4("Current Stock Information"),
+                dbc.Card([
+                    dbc.CardBody([
+                        dbc.Row([
+                            dbc.Col([
+                                html.H2(id="current-price"),
+                                html.P("Current Price ($)", className="text-muted"),
+                            ], width=4),
+                            dbc.Col([
+                                html.H2(id="price-change"),
+                                html.P("Change Today", className="text-muted"),
+                            ], width=4),
+                            dbc.Col([
+                                html.H2(id="total-value"),
+                                html.P("Total RSU Value ($)", className="text-muted"),
+                            ], width=4),
+                        ]),
+                    ])
+                ], className="mb-4"),
+                
+                # Alerts Section
+                html.Div(id="alerts-section", className="mt-3"),
+                
+                # Price Chart
+                dbc.Card([
+                    dbc.CardHeader("Stock Price History"),
+                    dbc.CardBody([
+                        dcc.Graph(id="price-chart"),
+                        dbc.Row([
+                            dbc.Col([
+                                dbc.Label("Time Period"),
+                                dcc.Dropdown(
+                                    id="time-period",
+                                    options=[
+                                        {"label": "1 Month", "value": "1mo"},
+                                        {"label": "3 Months", "value": "3mo"},
+                                        {"label": "6 Months", "value": "6mo"},
+                                        {"label": "1 Year", "value": "1y"},
+                                        {"label": "2 Years", "value": "2y"},
+                                        {"label": "5 Years", "value": "5y"},
+                                        {"label": "Max", "value": "max"},
+                                    ],
+                                    value="1y",
+                                    className="mb-3",
+                                )
+                            ], width=6),
+                        ]),
+                    ]),
+                ], className="mb-4"),
+            ], width=12, lg=6),
+            
+            # RSU Information Section
+            dbc.Col([
+                html.H4("RSU Information"),
+                dbc.Card([
+                    dbc.CardHeader("Vesting Schedule"),
+                    dbc.CardBody([
+                        dcc.Graph(id="vesting-chart"),
+                    ]),
+                ], className="mb-4"),
+                
+                dbc.Card([
+                    dbc.CardHeader("Selling Strategy"),
+                    dbc.CardBody([
+                        dbc.Row([
+                            dbc.Col([
+                                dbc.Label("Strategy"),
+                                dcc.Dropdown(
+                                    id="selling-strategy",
+                                    options=[
+                                        {"label": desc, "value": key} 
+                                        for key, desc in config.SELLING_STRATEGIES.items()
+                                    ],
+                                    value=config.DEFAULT_STRATEGY,
+                                    className="mb-3",
+                                ),
+                            ], width=12),
+                        ]),
+                        dcc.Graph(id="selling-chart"),
+                    ]),
+                ]),
+            ], width=12, lg=6),
+        ]),
+        
+        # Data Tables Section
+        dbc.Row([
+            dbc.Col([
+                html.H4("Selling Plan Details"),
+                dash_table.DataTable(
+                    id="selling-table",
+                    style_table={"overflowX": "auto"},
+                    style_cell={
+                        "textAlign": "left",
+                        "padding": "10px",
+                        "minWidth": "80px",
+                    },
+                    style_header={
+                        "backgroundColor": "rgb(230, 230, 230)",
+                        "fontWeight": "bold",
+                    },
+                    style_data_conditional=[
+                        {
+                            "if": {"row_index": "odd"},
+                            "backgroundColor": "rgb(248, 248, 248)",
+                        }
+                    ],
+                    page_size=10,
+                ),
+            ], width=12),
+        ], className="mt-4"),
+    ]),
     
     # Network Information Footer
     dbc.Row([
@@ -182,20 +262,19 @@ app.layout = dbc.Container([
         ], width=12),
     ]),
     
-    # Interval for automatic updates
-    dcc.Interval(
-        id="interval-component",
-        interval=config.REFRESH_INTERVAL * 1000,  # in milliseconds
-        n_intervals=0
-    ),
-    
     # Store components for data
     dcc.Store(id="stock-data-store"),
     dcc.Store(id="vesting-data-store"),
     dcc.Store(id="selling-data-store"),
     dcc.Store(id="last-price-store"),
     
-], fluid=True)
+    # Interval for automatic updates
+    dcc.Interval(
+        id="interval-component",
+        interval=config.REFRESH_INTERVAL * 1000,  # in milliseconds
+        n_intervals=0
+    ),
+], className="dashboard-container")
 
 # Callback to update the stock data store
 @app.callback(
@@ -623,6 +702,25 @@ def update_alerts(n_intervals, current_price):
         )
     
     return html.Div(alert_components)
+
+# Modal callbacks
+@app.callback(
+    Output("network-modal", "is_open"),
+    [Input("modal-button", "n_clicks"), Input("close-modal", "n_clicks")],
+    [State("network-modal", "is_open")],
+)
+def toggle_modal(n1, n2, is_open):
+    if n1 or n2:
+        return not is_open
+    return is_open
+
+# Network info update
+@app.callback(
+    Output("network-info", "children"),
+    [Input("interval-component", "n_intervals")]
+)
+def update_network_info(n):
+    return f"Network: {ip_address}:{config.DEFAULT_PORT}"
 
 if __name__ == "__main__":
     port = config.DEFAULT_PORT

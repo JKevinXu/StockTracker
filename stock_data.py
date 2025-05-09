@@ -3,26 +3,57 @@ import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
 import config
+import time
+import logging
 
-def get_current_price(symbol=config.STOCK_SYMBOL):
-    """Get the current stock price for the given symbol."""
-    ticker = yf.Ticker(symbol)
-    todays_data = ticker.history(period='1d')
-    return todays_data['Close'].iloc[-1]
+# Setup logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-def get_historical_data(symbol=config.STOCK_SYMBOL, period="2y"):
-    """Get historical stock data for the given symbol and period.
+def get_current_price(symbol=config.STOCK_SYMBOL, max_retries=3, retry_delay=5):
+    """Get the current stock price for the given symbol with retry logic."""
+    for attempt in range(max_retries):
+        try:
+            ticker = yf.Ticker(symbol)
+            todays_data = ticker.history(period='1d')
+            if not todays_data.empty:
+                return todays_data['Close'].iloc[-1]
+            raise ValueError("Empty data returned from Yahoo Finance")
+        except Exception as e:
+            logging.warning(f"Attempt {attempt+1}/{max_retries} failed: {str(e)}")
+            if attempt < max_retries - 1:
+                logging.info(f"Retrying in {retry_delay} seconds...")
+                time.sleep(retry_delay)
+            else:
+                logging.error(f"Failed to retrieve current price after {max_retries} attempts")
+                return None
+
+def get_historical_data(symbol=config.STOCK_SYMBOL, period="2y", max_retries=3, retry_delay=5):
+    """Get historical stock data with retry logic.
     
     Args:
         symbol: Stock symbol
         period: Valid periods: 1d,5d,1mo,3mo,6mo,1y,2y,5y,10y,ytd,max
+        max_retries: Maximum number of retry attempts
+        retry_delay: Delay between retries in seconds
     
     Returns:
-        Pandas DataFrame with historical data
+        Pandas DataFrame with historical data or empty DataFrame on failure
     """
-    ticker = yf.Ticker(symbol)
-    hist_data = ticker.history(period=period)
-    return hist_data
+    for attempt in range(max_retries):
+        try:
+            ticker = yf.Ticker(symbol)
+            hist_data = ticker.history(period=period)
+            if not hist_data.empty:
+                return hist_data
+            raise ValueError("Empty data returned from Yahoo Finance")
+        except Exception as e:
+            logging.warning(f"Attempt {attempt+1}/{max_retries} failed: {str(e)}")
+            if attempt < max_retries - 1:
+                logging.info(f"Retrying in {retry_delay} seconds...")
+                time.sleep(retry_delay)
+            else:
+                logging.error(f"Failed to retrieve historical data after {max_retries} attempts")
+                return pd.DataFrame()  # Return empty DataFrame on failure
 
 def get_vesting_dataframe():
     """Convert vesting schedule to DataFrame with dollar values."""

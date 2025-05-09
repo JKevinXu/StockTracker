@@ -38,7 +38,18 @@ PRICE_INCREASE_ALERT = 5  # Alert when price increases by 5%
 PRICE_DECREASE_ALERT = 5  # Alert when price decreases by 5%
 
 # Application Settings
-DEBUG_MODE = True
+DEBUG_MODE = False  # Set to False in production
 DEFAULT_PORT = 8050
-HOST = '0.0.0.0'  # Allow access from local network
-REFRESH_INTERVAL = 60  # Refresh data every 60 seconds 
+HOST = "0.0.0.0"  # Allow connections from any IP
+REFRESH_INTERVAL = 60  # Refresh data every 60 seconds
+
+# Logging Configuration
+LOG_LEVEL = "INFO"  # Options: DEBUG, INFO, WARNING, ERROR, CRITICAL
+
+# Data Retrieval Settings
+MAX_RETRIES = 5
+RETRY_DELAY = 5  # seconds between retries
+
+# Proxy Configuration (if needed)
+USE_PROXY = False
+PROXY_URL = ""  # e.g., "http://your.proxy:port" 
