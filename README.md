@@ -80,4 +80,26 @@ This application is designed for personal use on your local network. No RSU or f
 
 ## License
 
-This project is for personal use only. 
+This project is for personal use only.
+
+## Adding to Remote Git Repository
+
+To push this project to your own GitHub repository:
+
+1. Create a new repository on GitHub (don't initialize it with any files)
+
+2. Add your repository as the remote origin:
+```bash
+git remote add origin https://github.com/yourusername/StockTracker.git
+```
+
+3. Push your code to GitHub:
+```bash
+git push -u origin main
+```
+
+## Network Sharing
+
+This application includes network sharing capabilities, allowing you to access the dashboard from other devices on your local network.
+
+When you run the application, it will display both local and network URLs. You can share the network URL with others on your local network to allow them to access the dashboard. 
