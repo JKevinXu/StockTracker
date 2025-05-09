@@ -1,0 +1,93 @@
+/* Custom styling for Amazon Stock Tracker */
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f8f9fa;
+}
+
+.card {
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+    border: none;
+}
+
+.card-header {
+    background-color: #232f3e;
+    color: white;
+    font-weight: 600;
+    border-top-left-radius: 8px !important;
+    border-top-right-radius: 8px !important;
+}
+
+.text-success {
+    color: #007e33 !important;
+}
+
+.text-danger {
+    color: #cc0000 !important;
+}
+
+h1, h2, h3, h4, h5 {
+    font-weight: 600;
+}
+
+h1 {
+    color: #232f3e;
+}
+
+/* Amazon branded colors */
+.amazon-primary {
+    background-color: #232f3e;
+    color: white;
+}
+
+.amazon-secondary {
+    background-color: #febd69;
+    color: #232f3e;
+}
+
+/* Improve table styling */
+.dash-table-container .dash-spreadsheet-container .dash-spreadsheet-inner table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+.dash-table-container .dash-spreadsheet-container .dash-spreadsheet-inner th {
+    background-color: #232f3e !important;
+    color: white !important;
+    font-weight: 600 !important;
+    text-align: left !important;
+    padding: 12px !important;
+}
+
+.dash-table-container .dash-spreadsheet-container .dash-spreadsheet-inner td {
+    padding: 10px !important;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+/* Network info section */
+.network-info {
+    background-color: #f1f8ff;
+    border: 1px solid #cce5ff;
+    border-radius: 5px;
+    padding: 15px;
+    margin-top: 20px;
+}
+
+/* Custom styles for alerts */
+.alert {
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* Improve dropdown styling */
+.Select-control {
+    border-radius: 5px !important;
+}
+
+/* Make price numbers more prominent */
+#current-price, #price-change, #total-value {
+    font-weight: 700;
+    font-size: 1.8rem;
+} 
